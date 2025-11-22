@@ -2,169 +2,181 @@
 
 # Date: 16/10/25
 # Register no: 212222240101
-# Aim:
-Write and implement Python code that integrates with multiple AI tools to automate the task of interacting with APIs, comparing outputs, and generating actionable insights with Multiple AI Tools
+## Aim:
+To learn how to design effective prompts for AI tools to generate Python code, compare API outputs, and give insights.
 
-# AI Tools Required:
-- OpenAI GPT (gpt-3.5 / gpt-4)
-- Google Gemini (gemini-pro)
-- Python Libraries:
-   - openai
-   - google-generativeai
-   - sentence-transformers
-   - scikit-learn
-   - keybert
+## **2. AI Tools Required**
 
-# Explanation:
-Experiment the persona pattern as a programmer for any specific applications related with your interesting area. 
-Generate the outoput using more than one AI tool and based on the code generation analyse and discussing that. 
+1. **ChatGPT / Gemini / Claude**
+   – For generating Python code, explanations, and insights.
+2. **Any REST API Platform**
+   – OpenWeatherMap API
+   – WeatherAPI.com
+3. **VS Code / Jupyter Notebook (Optional)**
+   – To test the generated Python code.
+4. **JSON Viewer (Optional)**
+   – For viewing formatted API responses.
 
+## **3. Steps**
 
-# Conclusion:
-## Steps:
-1. API Setup – Configure access to OpenAI and Gemini using API keys.
-2. Response Collection – Send a single prompt to both tools and retrieve outputs.
-3. Semantic Analysis – Encode responses into embeddings and compute cosine similarity.
-4. Keyword Extraction – Extract top keywords using KeyBERT.
-5. Insights Generation – Compare responses, identify common/unique terms, and provide recommendations.
+1. Identify two APIs to compare (OpenWeatherMap & WeatherAPI are used in this experiment).
+2. Design prompts asking the AI to generate Python code to fetch data from both APIs.
+3. Run the AI-generated code and collect output JSON from both APIs.
+4. Create a prompt asking the AI to compare the outputs.
+5. Ask the AI to produce insights and next steps.
+6. Document all prompts, code, comparison tables, and final reflections.
+7. Prepare the final experiment report.
+
+## **4. Designed Prompts and AI Responses**
+
+## **Stage 1: Prompt for Generating Python Code**
+
+## **Prompt 1**
+
+Generate Python code that connects to two public APIs: 
+(1) OpenWeatherMap API to get current weather, and 
+(2) WeatherAPI.com for the same city. The code should:
+
+– Accept city name as input
+
+– Return temperature, humidity, and condition
+
+– Use error handling
+
+– Format output in clean JSON
+
+– Add comments explaining each step.
+
+### **AI Response (Code + Explanation)**
+
+### **Generated Python Code**
+
+```python
+import requests
+
+def fetch_openweather(city):
+    api_key = "YOUR_OPENWEATHER_KEY"
+    url = f"https://api.openweathermap.org/data/2.5/weather?q={city}&appid={api_key}&units=metric"
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+        data = response.json()
+
+        return {
+            "source": "OpenWeatherMap",
+            "temperature": data["main"]["temp"],
+            "humidity": data["main"]["humidity"],
+            "condition": data["weather"][0]["description"]
+        }
+    except Exception as e:
+        return {"error": str(e)}
+
+def fetch_weatherapi(city):
+    api_key = "YOUR_WEATHERAPI_KEY"
+    url = f"http://api.weatherapi.com/v1/current.json?key={api_key}&q={city}"
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+        data = response.json()
+
+        return {
+            "source": "WeatherAPI",
+            "temperature": data["current"]["temp_c"],
+            "humidity": data["current"]["humidity"],
+            "condition": data["current"]["condition"]["text"]
+        }
+    except Exception as e:
+        return {"error": str(e)}
+
+city = "Chennai"
+ow_data = fetch_openweather(city)
+wa_data = fetch_weatherapi(city)
+
+print("OpenWeatherMap:", ow_data)
+print("WeatherAPI:", wa_data)
 ```
-# Install required libraries (run once)
-# pip install openai google-generativeai sentence-transformers scikit-learn keybert
 
-import openai
-import google.generativeai as genai
-from sentence_transformers import SentenceTransformer
-from sklearn.metrics.pairwise import cosine_similarity
-from keybert import KeyBERT
+### **Explanation**
 
-# Initialize models
-embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
-kw_model = KeyBERT()
+* Two functions are created to fetch weather data.
+* JSON output is formatted for easy comparison.
+* Errors are handled with `try–except`.
+* The program prints the weather details for a given city from both APIs.
 
-# API Configuration - Replace with your keys
-OPENAI_API_KEY = "your-openai-key"
-GEMINI_API_KEY = "your-gemini-key"
+## **Stage 2: Prompt for Comparing API Outputs**
 
-openai.api_key = OPENAI_API_KEY
-genai.configure(api_key=GEMINI_API_KEY)
+## **Prompt 2**
 
-def get_openai_response(prompt):
-    response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
-        messages=[{"role": "user", "content": prompt}]
-    )
-    return response.choices[0].message.content
+**“Compare the JSON outputs from OpenWeatherMap and WeatherAPI. Highlight differences in temperature, humidity, and condition. Show a table and give a short explanation.”**
 
-def get_gemini_response(prompt):
-    model = genai.GenerativeModel('gemini-pro')
-    response = model.generate_content(prompt)
-    return response.text
+## **AI Response (Comparison Output)**
 
-def analyze_responses(prompt):
-    # Get AI responses
-    openai_response = get_openai_response(prompt)
-    gemini_response = get_gemini_response(prompt)
-    
-    # Compare embeddings
-    embeddings = embedding_model.encode([openai_response, gemini_response])
-    similarity = cosine_similarity([embeddings[0]], [embeddings[1]])[0][0]
-    
-    # Extract keywords
-    openai_kws = [kw[0] for kw in kw_model.extract_keywords(openai_response, top_n=3)]
-    gemini_kws = [kw[0] for kw in kw_model.extract_keywords(gemini_response, top_n=3)]
-    
-    # Generate insights
-    insights = {
-        "similarity_score": round(similarity, 2),
-        "common_keywords": list(set(openai_kws) & set(gemini_kws)),
-        "openai_keywords": openai_kws,
-        "gemini_keywords": gemini_kws,
-        "recommendation": (
-            "High agreement - Suitable for consistent outputs" if similarity > 0.7 
-            else "Moderate agreement - Review differences" if similarity > 0.4 
-            else "Low agreement - Investigate discrepancies"
-        )
-    }
-    
-    return {
-        "openai_response": openai_response,
-        "gemini_response": gemini_response,
-        "analysis": insights
-    }
+## **API Outputs Compared**
 
-if __name__ == "__main__":
-    prompt = "Explain the role of AI in sustainable agriculture in three sentences."
-    results = analyze_responses(prompt)
-    
-    print("OpenAI Response:\n", results["openai_response"], "\n")
-    print("Gemini Response:\n", results["gemini_response"], "\n")
-    print("Similarity Score:", results["analysis"]["similarity_score"])
-    print("Common Keywords:", results["analysis"]["common_keywords"])
-    print("OpenAI Keywords:", results["analysis"]["openai_keywords"])
-    print("Gemini Keywords:", results["analysis"]["gemini_keywords"])
-    print("Recommendation:", results["analysis"]["recommendation"])
+**OpenWeatherMap Output (Example):**
+
 ```
-### Example Output
-### OpenAI Response: 
+{
+  "source": "OpenWeatherMap",
+  "temperature": 31.0,
+  "humidity": 70,
+  "condition": "scattered clouds"
+}
+```
 
-"AI in sustainable agriculture helps optimize irrigation, monitor crop health using sensors, and reduce resource waste. Predictive models guide farmers in choosing planting strategies based on climate. This ensures higher yields with minimal environmental impact."
-### Gemini Response: 
-"The role of AI in sustainable agriculture includes precision farming, soil monitoring, and smart irrigation systems. By analyzing real-time data, AI helps farmers reduce water usage and pesticides. This results in eco-friendly farming and improved crop productivity."
-- Similarity Score: 0.82 Common Keywords: ['AI', 'agriculture', 'irrigation'] 
-- OpenAI Keywords: ['irrigation', 'climate', 'resources'] 
-- Gemini Keywords: ['precision', 'soil', 'eco-friendly'] 
-- Recommendation: High agreement - Suitable for consistent outputs
-### Discussion of Results
-1. Response Comparison:
-- OpenAI emphasizes climate strategies, predictive modeling, and resource efficiency.
-- Gemini emphasizes precision farming, soil monitoring, and eco-friendly practices.
-- Both responses overlap on core AI concepts in agriculture, leading to a high similarity score (0.82).
+**WeatherAPI Output (Example):**
 
-2. Keyword Analysis:
-- Common keywords show that both models mention the central themes of AI, agriculture, and irrigation.
-- Unique keywords reflect each model’s emphasis: OpenAI on climate and resources, Gemini on precision and eco-friendly methods.
+```
+{
+  "source": "WeatherAPI",
+  "temperature": 30.4,
+  "humidity": 74,
+  "condition": "Partly cloudy"
+}
+```
 
-3. Interpretation of Similarity Score:
-- Similarity > 0.7 → high agreement, meaning both models provide consistent insights.
-- A score between 0.4–0.7 would suggest moderate agreement and the need to review content for differences.
-- A score < 0.4 would indicate divergent outputs and require deeper analysis.
+## **Comparison Table**
 
-4. Recommendation:
-- High similarity and overlapping keywords suggest that combining insights from multiple AI tools is effective.
-- You can confidently use these outputs for reports, research, or content generation, knowing there is alignment between models.
+| **Parameter**    | **OpenWeatherMap** | **WeatherAPI** |
+| ---------------- | ------------------ | -------------- |
+| Temperature (°C) | 31.0               | 30.4           |
+| Humidity (%)     | 70                 | 74             |
+| Condition        | scattered clouds   | Partly cloudy  |
 
-### Coding Analysis
 
-1. Libraries and Models:
-- openai for GPT responses.
-- google-generativeai for Gemini responses.
-- sentence-transformers and cosine_similarity for embedding-based similarity analysis.
-- KeyBERT for extracting relevant keywords from text.
+### **Comparison Summary**
 
-2.Code Flow:
+Both APIs show very similar weather data. The temperature differs by only 0.6°C, humidity varies by 4%, and condition wording differs slightly. These small variations occur due to different sensors and update intervals. Both APIs are reliable for real-time weather monitoring.
 
-Step 1: Prompt both models for responses.
+## **Stage 3: Prompt for Insights**
 
-Step 2: Convert text to embeddings using all-MiniLM-L6-v2.
+### **Prompt 3**
 
-Step 3: Calculate cosine similarity between embeddings to measure semantic similarity.
+**“Based on the comparison, give insights and suggest next steps for improving the project. Output in bullet points.”**
 
-Step 4: Extract top 3 keywords using KeyBERT.
+## **AI Response (Insights + Next Steps)**
 
-Step 5: Identify common and unique keywords.
+### **Insights**
 
-Step 6: Generate actionable recommendation based on similarity.
+* Both APIs provide consistent temperature and humidity values.
+* Variations are small and acceptable for real-time weather applications.
+* WeatherAPI gives more descriptive conditions, while OpenWeatherMap provides richer metadata.
 
-3.Strengths of Code:
-- Multi-model comparison: Provides insights from multiple AI sources.
-- Semantic similarity: Goes beyond exact word matching, capturing meaning.
-- Keyword extraction: Highlights the main focus of each response.
-- Actionable recommendations: Simplifies decision-making on reliability.
+### **Next Steps**
 
-4.Possible Improvements:
-- Use more robust keyword extraction or increase top_n for detailed analysis.
-- Include sentiment or tone analysis to compare writing styles.
-- Allow dynamic model selection or batch processing of multiple prompts.
-- Handle exceptions for API failures to ensure smooth execution.
-# Result: 
-The corresponding Prompt is executed successfully.
+* Log data periodically to study trends over time.
+* Visualize temperature and humidity differences using graphs.
+* Add additional weather parameters like UV index, wind speed, or AQI.
+* Deploy the code as a mini web dashboard.
+
+## **5. Reflection Note**
+
+This experiment improved my understanding of how to design effective prompts for coding tasks. Clear prompts with detailed instructions resulted in accurate and complete code generation. When I included specific requirements such as JSON formatting and detailed comparison steps, the AI responses became more structured and useful.
+
+The comparison stage helped me understand how to ask the AI for formatted outputs like tables and summaries. Insights became more meaningful when I added context such as “suggest next steps.” Overall, I learned that the more precise and detailed the prompt, the better the AI output. This skill will be valuable for future project development.
+
+## Result:
+The experiment was successfully carried out, and the AI generated correct code, comparisons, and insights based on the prompts. Students understood that clear prompts lead to accurate and useful AI responses.
+
+
+
